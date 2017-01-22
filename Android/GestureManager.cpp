@@ -2,7 +2,7 @@
 
 GestureManager::GestureManager()
 {
-	m_timeForTapGesture = 400;
+	m_timeForTapGesture = 300;
 }
 
 GestureManager::~GestureManager()
@@ -15,17 +15,17 @@ GestureManager::~GestureManager()
 
 void GestureManager::swipe()
 {
-
+	std::cout << "Swipe Event" << std::endl;
 }
 
 void GestureManager::tap()
 {
-
+	std::cout << "Tap Event" << std::endl;
 }
 
 void GestureManager::hold()
 {
-
+	std::cout << "Updating Hold Event" << std::endl;
 }
 
 void GestureManager::pinch() 
@@ -48,14 +48,7 @@ void GestureManager::removeTouchEvent()
 {
 	for (size_t i = 0; i < m_touches.size(); i++)
 	{
-		float value = SDL_GetTicks() - m_touches[i]->getTimePressed();
-
-		if (value < m_timeForTapGesture)
-		{
-			std::cout << "Tap Event" << std::endl;
-		}
-
-		std::cout << "TimePressed: " << value << " milis : " << val << std::endl;
+		//std::cout << "TimePressed: " << value << " milis : " << m_timeForTapGesture << std::endl;
 		delete m_touches[i];	
 	}
 
@@ -65,7 +58,13 @@ void GestureManager::removeTouchEvent()
 
 void GestureManager::processInput(SDL_Event & evt)
 {
-	int xMouse, yMouse;
+	float dist = 0;
+	float value = 0;
+	if (m_touches.size() > 0)
+	{
+		value = SDL_GetTicks() - m_touches[0]->getTimePressed();
+	}
+
 	while (SDL_PollEvent(&evt))
 	{
 		switch (evt.type)
@@ -74,9 +73,29 @@ void GestureManager::processInput(SDL_Event & evt)
 			SDL_GetMouseState(&xMouse, &yMouse);
 			addTouchEvent(xMouse, yMouse, 0, SDL_GetTicks());	
 			break;
-		case SDL_MOUSEBUTTONUP:
-			if (m_touches.size() > 0) 
+		case SDL_MOUSEMOTION:
+			if (value > m_timeForTapGesture)
 			{
+				hold();
+			}
+			break;
+		case SDL_MOUSEBUTTONUP:
+			if (m_touches.size() > 0)
+			{
+				SDL_GetMouseState(&xMouse, &yMouse);
+				dist = sqrt((xMouse - m_touches[0]->getXpos()) * (xMouse - m_touches[0]->getXpos()) + (yMouse - m_touches[0]->getYpos()) * (yMouse - m_touches[0]->getYpos()));
+
+				std::cout << "dist: " << dist << std::endl;
+
+				if (value < m_timeForTapGesture && dist < 50)
+				{
+					tap();
+				}
+				else if (value < m_timeForTapGesture && dist >= 50)
+				{
+					swipe();
+				}
+
 				removeTouchEvent();
 			}
 			break;
@@ -88,6 +107,9 @@ void GestureManager::processInput(SDL_Event & evt)
 			break;
 		case SDL_FINGERUP:
 
+			break;
+		case SDL_MULTIGESTURE:
+			std::cout << "MULTIPLE Gestures" << std::endl;
 			break;
 		default:
 			break;
@@ -117,6 +139,7 @@ bool GestureManager::collisionChecker(float otherXposition, float otherYposition
 				bTop <= aBottom);
 		}
 	}
+	return false;
 }
 
 void GestureManager::debugRender(SDL_Renderer * renderer)

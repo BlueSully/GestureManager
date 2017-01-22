@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
 		SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
 		SDL_RenderFillRect(renderer, &fillRect);
 		m_gestureManager.debugRender(renderer);
+
 		//Update screen
 		SDL_RenderPresent(renderer);
 	}

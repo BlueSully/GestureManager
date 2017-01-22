@@ -11,6 +11,7 @@ private:
 	float m_Ypos;
 	float m_timePressed;
 	int m_touchId;
+	bool pressed;
 
 
 public:
@@ -49,6 +50,8 @@ private:
 	std::vector<TouchEvent*> m_touches;
 
 	float m_timeForTapGesture;
+
+	int xMouse, yMouse;
 
 public:
 	GestureManager();
