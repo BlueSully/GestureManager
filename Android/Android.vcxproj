@@ -23,7 +23,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GestureEvents.h" />
+    <ClInclude Include="GestureEvent.h" />
     <ClInclude Include="GestureManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -8,21 +8,25 @@ using namespace std;
 int main(int argc, char* argv[]) 
 {
 	bool running = true;
-
+	float last_tick_time = 0;
+	float delta = 0;
 	SDL_Window *window;                    // Declare a pointer
+	SDL_Point windowSize;
+	GestureManager * m_gestureManager;
 
-	GestureManager m_gestureManager;
 	SDL_Init(SDL_INIT_VIDEO);              // Initialize SDL2
+	windowSize.x = 640;
+	windowSize.y = 480;
 
 	SDL_Color colour = { 255, 0, 0, 255};
 	SDL_Rect fillRect = { 640 / 4, 480 / 4, 640 / 4, 480 / 4 };
-										   // Create an application window with the following settings:									   
+
 	window = SDL_CreateWindow(
 		"An SDL2 window",                  // window title
 		SDL_WINDOWPOS_UNDEFINED,           // initial x position
 		SDL_WINDOWPOS_UNDEFINED,           // initial y position
-		640,                               // width, in pixels
-		480,                               // height, in pixels
+		windowSize.x,                               // width, in pixels
+		windowSize.y,                               // height, in pixels
 		SDL_WINDOW_SHOWN                   // flags - see below
 	);
 
@@ -34,71 +38,35 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Setup renderer
+	m_gestureManager = new GestureManager(windowSize.x, windowSize.y);
 	SDL_Renderer* renderer = NULL;
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	
+	while (running) 
+	{
+		float tick_time = static_cast<float>(SDL_GetTicks());
+		delta = tick_time - last_tick_time;
+		last_tick_time = tick_time;
 
-	bool touchpressed = false;
-
-	while (running) {
 		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			switch (event.type)
-			{
-			case SDL_KEYDOWN:
-				printf("Key press detected\n");
-				if (colour.b == 255)
-				{
-					colour = m_gestureManager.getColour();
-				}
-				else if (colour.r == 255)
-				{
-					colour.r = 0;
-					colour.b = 255;
-					colour.g = 0;
-				}
-				else if (colour.g == 255)
-				{
-					colour.r = 255;
-					colour.b = 0;
-					colour.g = 0;
-				}
-				printf("r:%d g:%d b:%d \n", colour.r, colour.g, colour.b);
-				break;
-			case SDL_KEYUP:
-				printf("Key release detected\n");
-				break;
-			case SDL_FINGERDOWN:
-				touchpressed = true;
-				break;
-			case SDL_FINGERUP:
-				if (touchpressed)
-				{
-					fillRect.y += 10;
-					colour = m_gestureManager.getColour();
-					
-					printf("r:%d g:%d b:%d \n", colour.r, colour.g, colour.b);
-					touchpressed = false;
-				}
-				break;
-			default:
-				break;
-			}
-		}
+
+		m_gestureManager->processInput(event);
+		m_gestureManager->collisionChecker(static_cast<float>(fillRect.x), 
+										   static_cast<float>(fillRect.y), 
+										   static_cast<float>(fillRect.w), 
+										   static_cast<float>(fillRect.h));
 
 		//Clear screen
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 
-		//Render red filled quad
-
+		colour = m_gestureManager->getDebugColour();
 		SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
 		SDL_RenderFillRect(renderer, &fillRect);
+		m_gestureManager->debugRender(renderer);
 
 		//Update screen
 		SDL_RenderPresent(renderer);
-
 	}
 
 	SDL_DestroyWindow(window);

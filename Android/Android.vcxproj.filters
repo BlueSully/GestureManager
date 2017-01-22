@@ -26,7 +26,7 @@
     <ClInclude Include="GestureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GestureEvents.h">
+    <ClInclude Include="GestureEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
