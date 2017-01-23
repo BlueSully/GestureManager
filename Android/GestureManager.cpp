@@ -1,17 +1,24 @@
 #include "GestureManager.h"
 
-GestureManager::GestureManager()
+GestureManager::GestureManager() : m_currentEvent((GestureEvent)-1)
 {
 	m_timeForTapGesture = 250;
-	m_colour = SDL_Color{ 255, 255, 255, 255 };
 
 	m_targetPosition = new SDL_Point();
 	m_targetSize = new SDL_Point();
+	m_swipeData;
+	m_colour.r = 255;
+	m_colour.g = 255;
+	m_colour.b = 255;
+	m_colour.a = 255;
 
-	fillRect = { 0, 0, 50, 50 };
+	fillRect.x = 0;
+	fillRect.y = 0;
+	fillRect.w = 50;
+	fillRect.h = 50;
 }
 
-GestureManager::GestureManager(int screenWidth, int screenHeight)
+GestureManager::GestureManager(int screenWidth, int screenHeight) : m_currentEvent((GestureEvent)-1)
 {
 	m_timeForTapGesture = 250;
 	m_screenSize.x = screenWidth;
@@ -20,8 +27,15 @@ GestureManager::GestureManager(int screenWidth, int screenHeight)
 	m_targetPosition = new SDL_Point();
 	m_targetSize = new SDL_Point();
 
-	m_colour = SDL_Color{ 255, 255, 255, 255 };
-	fillRect = { 0, 0, 50, 50 };
+	m_colour.r = 255;
+	m_colour.g = 255;
+	m_colour.b = 255;
+	m_colour.a = 255;
+
+	fillRect.x = 0;
+	fillRect.y = 0;
+	fillRect.w = 50;
+	fillRect.h = 50;
 }
 
 GestureManager::~GestureManager()
@@ -32,28 +46,70 @@ GestureManager::~GestureManager()
 	}
 }
 
-void GestureManager::swipe()
+void GestureManager::swipe(float endPostionX, float endPostionY, float startPositionX, float startPositionY)
 {
+	m_colour.r = 0;
+	m_colour.g = 0;
+	m_colour.b = 255;
+	m_colour.a = 255;
+
 	std::cout << "Swipe Event" << std::endl;
-	m_colour = SDL_Color { 0, 0, 255, 255 };
+
+	float directionX = startPositionX - endPostionX;
+	float directionY = startPositionY - endPostionY;
+
+	m_swipeData.x = directionX;
+	m_swipeData.y = directionY;
+
+	float magData = sqrt(m_swipeData.x * m_swipeData.x + m_swipeData.y * m_swipeData.y);
+	float x = m_swipeData.x / magData;
+	float y = m_swipeData.y / magData;
+
+	m_currentEvent = GestureEvent::SWIPE;
 }
 
 void GestureManager::tap()
 {
-	std::cout << "Tap Event" << std::endl;
-	m_colour = SDL_Color{ 255, 0, 0, 255 };
+	std::cout << "Tap Event" << std::endl;	
+
+	m_colour.r = (Uint8)rand() % 257;
+	m_colour.g = (Uint8)rand() % 257;
+	m_colour.b = (Uint8)rand() % 257;
+
+	m_currentEvent = GestureEvent::TAP;
 }
 
 void GestureManager::hold()
 {
 	std::cout << "Hold Event" << std::endl;
-	m_colour = SDL_Color{ 0, 255, 0, 255 };
+		
+	m_colour.r = 0;
+	m_colour.g = 255;
+	m_colour.b = 0;
+
+	m_currentEvent = GestureEvent::TAP;
 }
 
-void GestureManager::pinch() 
+void GestureManager::pinchOpen(SDL_Event & evt)
 {
-	std::cout << "Pinch Event" << std::endl;
-	m_colour = SDL_Color{ 0, 255, 255, 255 };
+	std::cout << "Pinch Open Event" << std::endl;
+
+	m_colour.r = 0;
+	m_colour.g = 255;
+	m_colour.b = 255;
+
+	m_currentEvent = GestureEvent::PINCH;
+}
+
+void GestureManager::pinchClose(SDL_Event & evt)
+{
+	std::cout << "Pinch Close Event" << std::endl;
+
+	m_colour.r = 125;
+	m_colour.g = 0;
+	m_colour.b = 125;
+
+	m_currentEvent = GestureEvent::PINCH;
 }
 
 void GestureManager::addTouchEvent(int xPosition, int yPosition, int id, float timesincePressed)
@@ -81,7 +137,7 @@ void GestureManager::processInput(SDL_Event & evt)
 {
 	float dist = 0;
 	float value = 0;
-	m_currentEvent = (GestureEvent)-1;
+	//m_currentEvent = (GestureEvent)-1;
 
 	if (m_touches.size() > 0)
 	{
@@ -94,15 +150,15 @@ void GestureManager::processInput(SDL_Event & evt)
 		{
 		case SDL_MOUSEBUTTONDOWN:
 			SDL_GetMouseState(&xMouse, &yMouse);
-			addTouchEvent(xMouse, yMouse, 0, SDL_GetTicks());
+			addTouchEvent(xMouse, yMouse, evt.tfinger.touchId, SDL_GetTicks());
 			collisionChecker();
 			break;
 		case SDL_MOUSEMOTION:
 			SDL_GetMouseState(&xMouse, &yMouse);
+
 			if (value > m_timeForTapGesture && evt.mgesture.numFingers == 1)
 			{
 				hold();
-				m_currentEvent = GestureEvent::HOLD;
 			}
 			break;
 		case SDL_MOUSEBUTTONUP:
@@ -111,28 +167,29 @@ void GestureManager::processInput(SDL_Event & evt)
 				SDL_GetMouseState(&xMouse, &yMouse);
 				dist = sqrt((xMouse - m_touches[0].first->getXpos()) * (xMouse - m_touches[0].first->getXpos()) + (yMouse - m_touches[0].first->getYpos()) * (yMouse - m_touches[0].first->getYpos()));
 
-				/*std::cout << "dist: " << dist << std::endl;
-				std::cout << "time: " << value << std::endl;*/
-
 				if (value < m_timeForTapGesture && dist < 50)
 				{
 					tap();
-					m_currentEvent = GestureEvent::TAP;
 				}
 				else if (value < m_timeForTapGesture && dist >= 50)
 				{
-					swipe();
-					m_currentEvent = GestureEvent::SWIPE;
+					swipe(xMouse, yMouse, m_touches[0].first->getXpos(), m_touches[0].first->getYpos());
 				}
 
 				removeTouchEvent();
 			}
 			break;
 		case SDL_MULTIGESTURE:
-			if (evt.mgesture.dDist > 0 && evt.mgesture.numFingers == 2)
-			{ 
-				pinch();
-				m_currentEvent = GestureEvent::PINCH;
+			if (evt.mgesture.numFingers == 2)
+			{
+				if (evt.mgesture.dDist >= 0)
+				{
+					pinchOpen(evt);
+				}
+				else if (evt.mgesture.dDist < 0)
+				{
+					pinchClose(evt);
+				}
 			}
 			break;
 		default:
@@ -147,19 +204,21 @@ void GestureManager::processInput(SDL_Event & evt)
 	}
 }
 
-std::pair<GestureEvent, bool> GestureManager::getEventData() const
+GestureEvent GestureManager::getEventData() const
 {
-	if (m_touches.size() > 0)
-	{
-		for (int i = 0; i < m_touches.size(); i++)
-		{
-			if (m_touches[i].second)
-			{
-				return std::make_pair(m_currentEvent, m_touches[i].second);
-			}
-		}
-	}
-	return std::make_pair((GestureEvent)-1, false);
+	//if (m_touches.size() > 0)
+	//{
+	//	for (int i = 0; i < m_touches.size(); i++)
+	//	{
+	//		if (m_touches[i].second)
+	//		{
+	return m_currentEvent;
+	//return (GestureEvent)(-1);
+}
+
+SDL_Point GestureManager::getSwipeData() const
+{
+	return m_swipeData;
 }
 
 void GestureManager::collisionChecker()
@@ -186,7 +245,7 @@ void GestureManager::collisionChecker()
 	}
 }
 
-void GestureManager::setTargetObject(int & otherXposition, int & otherYposition, int & width, int & height)
+void GestureManager::setTargetObject(float & otherXposition, float & otherYposition, float & width, float & height)
 {
 	m_targetPosition->x = otherXposition;
 	m_targetPosition->y = otherYposition;

@@ -1,5 +1,6 @@
 #include "SDL.h"
 #include "GestureManager.h"
+
 #include <stdio.h>
 #include <stdlib.h>     
 #include <time.h>      
@@ -7,29 +8,54 @@
 
 using namespace std;
 
+struct Clock
+{
+	uint32_t last_tick_time = 0;
+	uint32_t delta = 0;
+
+	void tick()
+	{
+		uint32_t tick_time = SDL_GetTicks();
+		delta = tick_time - last_tick_time;
+		last_tick_time = tick_time;
+	}
+};
+
 int main(int argc, char* argv[]) 
 {
 	srand(time(NULL));
 	bool running = true;
-	float last_tick_time = 0;
-	float delta = 0;
-	SDL_Window *window;                    // Declare a pointer
+
+	Clock m_clock;
+
+	float positionX = 640 / 4;
+	float positionY = 480 / 4;
+	float sizeW = 100;
+	float sizeH = 100;
+
+	SDL_Window *window;
+
 	SDL_Point windowSize;
+	SDL_Point velocity;
+
 	GestureManager * m_gestureManager;
 
-	SDL_Init(SDL_INIT_VIDEO);              // Initialize SDL2
+	SDL_Init(SDL_INIT_VIDEO);
+
 	windowSize.x = 640;
 	windowSize.y = 480;
 
-	SDL_Color colour = { 255, 0, 0, 255};
-	SDL_Rect fillRect = { 640 / 4, 480 / 4, 150, 150 };
+	velocity.x = 0;
+	velocity.y = 0;
+
+	SDL_Color colour = { 255, 0, 0, 255 };
 
 	window = SDL_CreateWindow(
 		"An SDL2 window",                  // window title
 		SDL_WINDOWPOS_UNDEFINED,           // initial x position
 		SDL_WINDOWPOS_UNDEFINED,           // initial y position
-		windowSize.x,                               // width, in pixels
-		windowSize.y,                               // height, in pixels
+		windowSize.x,                      // width, in pixels
+		windowSize.y,                      // height, in pixels
 		SDL_WINDOW_SHOWN                   // flags - see below
 	);
 
@@ -42,41 +68,51 @@ int main(int argc, char* argv[])
 	}
 
 	m_gestureManager = new GestureManager(windowSize.x, windowSize.y);
+
 	SDL_Renderer* renderer = NULL;
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	
 	while (running) 
 	{
-		float tick_time = static_cast<float>(SDL_GetTicks());
-		delta = tick_time - last_tick_time;
-		last_tick_time = tick_time;
+		m_clock.tick();
 
 		SDL_Event event;
 
 		m_gestureManager->processInput(event);
 
-		//colour = m_gestureManager->getDebugColour();
-		m_gestureManager->setTargetObject(fillRect.x, fillRect.y, fillRect.w, fillRect.h);
-		std::cout << "gesture: " << m_gestureManager->getEventData().first << " collide: " << m_gestureManager->getEventData().second << endl;
+		colour = m_gestureManager->getDebugColour();
 
-		if (m_gestureManager->getEventData().first == GestureEvent::TAP &&
-			m_gestureManager->getEventData().second)// if touch event collides with object
+		m_gestureManager->setTargetObject(positionX, positionY, sizeW, sizeH);
+
+		
+		if (m_gestureManager->getEventData() == GestureEvent::SWIPE) 
 		{
-			///////////////////////
-			// Deleting touch event before gesture is read.
-			/////////////////////
-			colour.r = (Uint8)rand() % 257;
-			colour.g = (Uint8)rand() % 257;
-			colour.b = (Uint8)rand() % 257;
+			velocity = m_gestureManager->getSwipeData();
+			cout << "veloX: " << velocity.x << " veloY: " << velocity.y << endl;
 		}
+	/*	else 
+		{
+			velocity.x = 10;
+			velocity.y = 10;
+		}*/
+
+		positionX += (velocity.x * m_clock.delta) * 0.00001f;
+		positionY += (velocity.y * m_clock.delta) * 0.00001f;
 
 		//Clear screen
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 
 		
+		SDL_Rect sr;
+		sr.h = (int)sizeH;
+		sr.w = (int)sizeW;
+		sr.x = (int)positionX;
+		sr.y = (int)positionY;
+
+
 		SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
-		SDL_RenderFillRect(renderer, &fillRect);
+		SDL_RenderFillRect(renderer, &sr);
 		m_gestureManager->debugRender(renderer);
 
 		//Update screen

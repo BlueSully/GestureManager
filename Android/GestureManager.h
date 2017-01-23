@@ -48,7 +48,7 @@ class GestureManager
 {
 private:
 	std::vector<SDL_Rect> m_touchesDebug;
-	std::vector<std::pair<TouchEvent*, bool>> m_touches;
+	std::vector<std::pair<TouchEvent*, bool> > m_touches;
 
 	GestureEvent m_currentEvent;
 
@@ -57,16 +57,19 @@ private:
 	SDL_Point * m_targetPosition;
 	SDL_Point * m_targetSize;
 
+	SDL_Point m_swipeData;
+
 	float m_timeForTapGesture;
 	SDL_Rect fillRect;
 	SDL_Color m_colour;
 
 	int xMouse, yMouse;
 
-	void swipe();
+	void swipe(float endPostionX, float endPostionY, float startPositionX, float startPositionY);
 	void tap();
 	void hold();
-	void pinch();
+	void pinchOpen(SDL_Event & evt);
+	void pinchClose(SDL_Event & evt);
 
 	void collisionChecker();
 
@@ -80,9 +83,10 @@ public:
 
 	void processInput(SDL_Event & evt);
 
-	std::pair<GestureEvent, bool> getEventData() const;
+	GestureEvent getEventData() const;
+	SDL_Point getSwipeData() const;
 	
-	void setTargetObject(int &otherXposition, int &otherYposition, int &width, int &height);
+	void setTargetObject(float & otherXposition, float & otherYposition, float & width, float & height);
 	void debugRender(SDL_Renderer * renderer);
 	SDL_Color getDebugColour() const;
 };
