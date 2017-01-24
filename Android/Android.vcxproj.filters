@@ -21,12 +21,18 @@
     <ClCompile Include="GestureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BoxObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GestureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GestureEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoxObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

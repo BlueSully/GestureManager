@@ -1,5 +1,6 @@
 #include "SDL.h"
 #include "GestureManager.h"
+#include "BoxObject.h"
 
 #include <stdio.h>
 #include <stdlib.h>     
@@ -28,27 +29,13 @@ int main(int argc, char* argv[])
 
 	Clock m_clock;
 
-	float positionX = 640 / 4;
-	float positionY = 480 / 4;
-	float sizeW = 100;
-	float sizeH = 100;
-
 	SDL_Window *window;
-
 	SDL_Point windowSize;
-	SDL_Point velocity;
-
-	GestureManager * m_gestureManager;
 
 	SDL_Init(SDL_INIT_VIDEO);
 
 	windowSize.x = 640;
 	windowSize.y = 480;
-
-	velocity.x = 0;
-	velocity.y = 0;
-
-	SDL_Color colour = { 255, 0, 0, 255 };
 
 	window = SDL_CreateWindow(
 		"An SDL2 window",                  // window title
@@ -67,52 +54,55 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	m_gestureManager = new GestureManager(windowSize.x, windowSize.y);
-
 	SDL_Renderer* renderer = NULL;
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	
-	while (running) 
+
+	BoxObject m_box;
+
+	GestureManager * m_gestureManager;
+	m_gestureManager = new GestureManager(windowSize.x, windowSize.y);
+	m_gestureManager->createListener(GestureListener::GestureEvent::TAP, &m_box);
+	m_gestureManager->createListener(GestureListener::GestureEvent::SWIPE, &m_box);
+
+	while (running)
 	{
 		m_clock.tick();
 
 		SDL_Event event;
 
 		m_gestureManager->processInput(event);
+		TouchEvent * touchEvent = m_gestureManager->getTouchEventData();
 
-		colour = m_gestureManager->getDebugColour();
-
-		m_gestureManager->setTargetObject(positionX, positionY, sizeW, sizeH);
-
-		
-		if (m_gestureManager->getEventData() == GestureEvent::SWIPE) 
+		if (touchEvent != nullptr)
 		{
-			velocity = m_gestureManager->getSwipeData();
-			cout << "veloX: " << velocity.x << " veloY: " << velocity.y << endl;
+			m_box.setPressed(m_box.collisionChecker(touchEvent->getXpos(), touchEvent->getYpos(), 0, 0));
 		}
-	/*	else 
-		{
-			velocity.x = 10;
-			velocity.y = 10;
-		}*/
 
-		positionX += (velocity.x * m_clock.delta) * 0.00001f;
-		positionY += (velocity.y * m_clock.delta) * 0.00001f;
+
+		//switch (m_gestureManager->getEventData())
+		//{	
+		//	case GestureListener::GestureEvent::TAP:
+		//		/**/
+		//		break;
+		//	case GestureListener::GestureEvent::SWIPE:
+		//		m_box.setColour(m_gestureManager->getDebugColour().r, m_gestureManager->getDebugColour().g, m_gestureManager->getDebugColour().b, m_gestureManager->getDebugColour().a);
+		//		break;
+		//	case GestureListener::GestureEvent::HOLD:
+		//		m_box.setColour(m_gestureManager->getDebugColour().r, m_gestureManager->getDebugColour().g, m_gestureManager->getDebugColour().b, m_gestureManager->getDebugColour().a);
+		//		break;
+		//	case GestureListener::GestureEvent::PINCH:
+		//		m_box.setColour(m_gestureManager->getDebugColour().r, m_gestureManager->getDebugColour().g, m_gestureManager->getDebugColour().b, m_gestureManager->getDebugColour().a);
+		//		break;
+		//}
+
+		m_box.update(m_clock.delta);
 
 		//Clear screen
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 
-		
-		SDL_Rect sr;
-		sr.h = (int)sizeH;
-		sr.w = (int)sizeW;
-		sr.x = (int)positionX;
-		sr.y = (int)positionY;
+		m_box.draw(renderer);
 
-
-		SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
-		SDL_RenderFillRect(renderer, &sr);
 		m_gestureManager->debugRender(renderer);
 
 		//Update screen

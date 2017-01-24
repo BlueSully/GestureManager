@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoxObject.cpp" />
     <ClCompile Include="GestureManager.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoxObject.h" />
     <ClInclude Include="GestureEvent.h" />
     <ClInclude Include="GestureManager.h" />
   </ItemGroup>

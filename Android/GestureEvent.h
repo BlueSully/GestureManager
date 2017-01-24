@@ -1,8 +1,15 @@
 #pragma once
-enum GestureEvent
+class GestureListener
 {
-	TAP,
-	PINCH,
-	SWIPE,
-	HOLD
+public:
+
+	enum GestureEvent
+	{
+		TAP,
+		PINCH,
+		SWIPE,
+		HOLD
+	};
+
+	virtual void onGesture(GestureEvent) = 0;
 };

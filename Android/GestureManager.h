@@ -3,7 +3,43 @@
 #include "GestureEvent.h"
 #include <iostream>
 #include<map>
+#include <string>
 #include<vector>
+
+struct FloatPoint
+{
+public:
+	float x = 0;
+	float y = 0;
+
+	FloatPoint operator+(const FloatPoint& b) 
+	{
+		this->x += b.x;
+		this->y += b.y;
+		return *this;
+	}
+
+	FloatPoint operator-(const FloatPoint& b)
+	{
+		this->x -= b.x;
+		this->y -= b.y;
+		return *this;
+	}
+
+	FloatPoint operator*(const FloatPoint& b)
+	{
+		this->x *= b.x;
+		this->y *= b.y;
+		return *this;
+	}
+
+	FloatPoint operator/(const FloatPoint& b)
+	{
+		this->x /= b.x;
+		this->y /= b.y;
+		return *this;
+	}
+};
 
 struct TouchEvent
 {
@@ -13,8 +49,7 @@ private:
 	float m_timePressed;
 	int m_touchId;
 	bool pressed;
-
-
+	
 public:
 	TouchEvent() {}
 
@@ -38,6 +73,16 @@ public:
 		return m_Ypos;
 	}
 
+	void setXpos(float value) 
+	{
+		m_Xpos = value;
+	}
+
+	void setYpos(float value)
+	{
+		m_Ypos = value;
+	}
+
 	float getTimePressed() const 
 	{
 		return m_timePressed;
@@ -48,30 +93,24 @@ class GestureManager
 {
 private:
 	std::vector<SDL_Rect> m_touchesDebug;
-	std::vector<std::pair<TouchEvent*, bool> > m_touches;
+	std::vector<TouchEvent*> m_touches;
 
-	GestureEvent m_currentEvent;
+	std::map<GestureListener::GestureEvent, 
+		     std::vector<GestureListener*>*> m_listeners;
+
+	GestureListener::GestureEvent m_currentEvent;
 
 	SDL_Point m_screenSize;
 
-	SDL_Point * m_targetPosition;
-	SDL_Point * m_targetSize;
-
-	SDL_Point m_swipeData;
+	FloatPoint m_swipeVelocity;
 
 	float m_timeForTapGesture;
-	SDL_Rect fillRect;
-	SDL_Color m_colour;
 
 	int xMouse, yMouse;
 
-	void swipe(float endPostionX, float endPostionY, float startPositionX, float startPositionY);
-	void tap();
-	void hold();
+	void calculateSwipeVelocity(float endPostionX, float endPostionY, float startPositionX, float startPositionY, float distanceTravelled, float timeTaken);
 	void pinchOpen(SDL_Event & evt);
 	void pinchClose(SDL_Event & evt);
-
-	void collisionChecker();
 
 public:
 	GestureManager();
@@ -81,12 +120,15 @@ public:
 	void addTouchEvent(int xPosition, int yPosition, int id, float timesincePressed);
 	void removeTouchEvent();
 
+	void createListener(GestureListener::GestureEvent evt, GestureListener *listener);
+	void dispatchEvent(GestureListener::GestureEvent evt);
+
 	void processInput(SDL_Event & evt);
 
-	GestureEvent getEventData() const;
-	SDL_Point getSwipeData() const;
-	
-	void setTargetObject(float & otherXposition, float & otherYposition, float & width, float & height);
+	TouchEvent * getTouchEventData();
+
+	GestureListener::GestureEvent getEventData() const;
+	FloatPoint getSwipeData() const;
+
 	void debugRender(SDL_Renderer * renderer);
-	SDL_Color getDebugColour() const;
 };
