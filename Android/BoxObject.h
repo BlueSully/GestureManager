@@ -1,6 +1,7 @@
 #pragma once
 #include "SDL.h"
 #include "GestureListener.h"
+#include "GestureManager.h"
 #include <stdlib.h>     
 
 class BoxObject : public GestureListener
@@ -25,7 +26,7 @@ public:
 	float getYpos() const;
 	float getSizeW() const;
 	float getSizeH() const;
-	void setPressed(bool value);
+
 	float getXvelocity() const;
 	float getYvelocity() const;
 	void setVelocity(float x, float y);

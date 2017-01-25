@@ -92,6 +92,9 @@ public:
 class GestureManager
 {
 private:
+	static GestureManager * m_instance;
+	GestureManager();
+
 	std::vector<SDL_Rect> m_touchesDebug;
 	std::vector<TouchEvent*> m_touches;
 
@@ -110,8 +113,8 @@ private:
 	void pinchClose(SDL_Event & evt);
 
 public:
-	GestureManager();
-	GestureManager(int screenWidth, int screenHeight);
+	static GestureManager * getInstance();
+	
 	~GestureManager();
 
 	void addTouchEvent(int xPosition, int yPosition, int id, float timesincePressed);
@@ -120,6 +123,7 @@ public:
 	void createListener(GestureListener::GestureEvent evt, GestureListener *listener);
 	void dispatchEvent(GestureListener::GestureEvent evt);
 
+	void setScreenSize(int screenWidth, int screenHeight);
 	void processInput(SDL_Event & evt);
 
 	TouchEvent * getTouchEventData();

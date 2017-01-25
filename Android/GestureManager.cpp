@@ -1,15 +1,20 @@
 #include "GestureManager.h"
 
+GestureManager *  GestureManager::m_instance = nullptr;
+
+GestureManager * GestureManager::getInstance()
+{
+	if (!m_instance)
+	{
+		m_instance = new GestureManager();
+	};
+
+	return m_instance;
+}
+
 GestureManager::GestureManager()
 {
 	m_timeForTapGesture = 250;
-}
-
-GestureManager::GestureManager(int screenWidth, int screenHeight) 
-{
-	m_timeForTapGesture = 250;
-	m_screenSize.x = screenWidth;
-	m_screenSize.y = screenHeight;
 }
 
 GestureManager::~GestureManager()
@@ -18,6 +23,8 @@ GestureManager::~GestureManager()
 	{
 		delete m_touches[i];	
 	}
+
+	delete m_instance;
 }
 
 void GestureManager::calculateSwipeVelocity(float endPostionX, float endPostionY, float startPositionX, float startPositionY, float distanceTravelled, float timeTaken)
@@ -27,14 +34,8 @@ void GestureManager::calculateSwipeVelocity(float endPostionX, float endPostionY
 
 	float magData = sqrt((m_swipeVelocity.x * m_swipeVelocity.x) + (m_swipeVelocity.y * m_swipeVelocity.y));
 
-	m_swipeVelocity.x = m_swipeVelocity.x / magData;
-	m_swipeVelocity.y = m_swipeVelocity.y / magData;
-
-
-	//sqrt((m_swipeVelocity.x * m_swipeVelocity.x) + (m_swipeVelocity.y * m_swipeVelocity.y))
-
-	m_swipeVelocity.x *= distanceTravelled;
-	m_swipeVelocity.y *= distanceTravelled;
+	m_swipeVelocity.x = -m_swipeVelocity.x / magData;
+	m_swipeVelocity.y = -m_swipeVelocity.y / magData;
 
 	dispatchEvent(GestureListener::GestureEvent::SWIPE);
 }
@@ -92,35 +93,32 @@ void GestureManager::dispatchEvent(GestureListener::GestureEvent evt)
 	std::string eventName = "dispatching: ";
 	if (m_listeners.find(evt) != m_listeners.end())
 	{
-		/*for (GestureListener * const &listener : *m_listeners[evt])
-		{*/
-			for (std::vector<GestureListener *>::iterator iter = m_listeners[evt]->begin(); iter != m_listeners[evt]->end(); iter++)
+		for (std::vector<GestureListener *>::iterator iter = m_listeners[evt]->begin(); iter != m_listeners[evt]->end(); iter++)
+		{
+			switch (evt)
 			{
-				switch (evt)
-				{
-				case GestureListener::GestureEvent::TAP:
-					eventName += "TAP";
-					break;
-				case GestureListener::GestureEvent::HOLD:
-					eventName += "HOLD";
-					break;
-				case GestureListener::GestureEvent::SWIPE:
-					eventName += "SWIPE";
-					break;
-				case GestureListener::GestureEvent::PINCH:
-					eventName += "PINCH";
-					break;
-				}
-				
-
-				std::cout << eventName << std::endl;
-				(*iter)->onGesture(evt);
+			case GestureListener::GestureEvent::TAP:
+				eventName += "TAP";
+				break;
+			case GestureListener::GestureEvent::HOLD:
+				eventName += "HOLD";
+				break;
+			case GestureListener::GestureEvent::SWIPE:
+				eventName += "SWIPE";
+				break;
+			case GestureListener::GestureEvent::PINCH:
+				eventName += "PINCH";
+				break;
 			}
-			
 
-			//listener->onGesture(evt);
-		//}
+			std::cout << eventName << std::endl;
+			(*iter)->onGesture(evt);
+		}
 	}
+}
+
+void GestureManager::setScreenSize(int screenWidth, int screenHeight)
+{
 }
 
 void GestureManager::processInput(SDL_Event & evt)
