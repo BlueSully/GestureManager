@@ -1,130 +1,136 @@
 #include "GestureManager.h"
 
-GestureManager::GestureManager() : m_currentEvent((GestureEvent)-1)
+GestureManager::GestureManager()
 {
 	m_timeForTapGesture = 250;
-
-	m_targetPosition = new SDL_Point();
-	m_targetSize = new SDL_Point();
-
-	m_colour.r = 255;
-	m_colour.g = 255;
-	m_colour.b = 255;
-	m_colour.a = 255;
-
-	fillRect.x = 0;
-	fillRect.y = 0;
-	fillRect.w = 50;
-	fillRect.h = 50;
 }
 
-GestureManager::GestureManager(int screenWidth, int screenHeight) : m_currentEvent((GestureEvent)-1)
+GestureManager::GestureManager(int screenWidth, int screenHeight) 
 {
 	m_timeForTapGesture = 250;
 	m_screenSize.x = screenWidth;
 	m_screenSize.y = screenHeight;
-
-	m_targetPosition = new SDL_Point();
-	m_targetSize = new SDL_Point();
-
-	m_colour.r = 255;
-	m_colour.g = 255;
-	m_colour.b = 255;
-	m_colour.a = 255;
-
-	fillRect.x = 0;
-	fillRect.y = 0;
-	fillRect.w = 50;
-	fillRect.h = 50;
 }
 
 GestureManager::~GestureManager()
 {
 	for (size_t i = 0; i < m_touches.size(); i++)
 	{
-		delete m_touches[i].first;	
+		delete m_touches[i];	
 	}
 }
 
-void GestureManager::swipe()
+void GestureManager::calculateSwipeVelocity(float endPostionX, float endPostionY, float startPositionX, float startPositionY, float distanceTravelled, float timeTaken)
 {
-	std::cout << "Swipe Event" << std::endl;
-	m_colour.r = 0;
-	m_colour.g = 0;
-	m_colour.b = 255;
-	m_colour.a = 255;
-}
+	m_swipeVelocity.x = startPositionX - endPostionX;
+	m_swipeVelocity.y = startPositionY - endPostionY;
 
-void GestureManager::tap()
-{
-	std::cout << "Tap Event" << std::endl;	
+	float magData = sqrt((m_swipeVelocity.x * m_swipeVelocity.x) + (m_swipeVelocity.y * m_swipeVelocity.y));
 
-	m_colour.r = 255;
-	m_colour.g = 0;
-	m_colour.b = 0;
-	m_colour.a = 255;
-}
+	m_swipeVelocity.x = m_swipeVelocity.x / magData;
+	m_swipeVelocity.y = m_swipeVelocity.y / magData;
 
-void GestureManager::hold()
-{
-	std::cout << "Hold Event" << std::endl;
 
-	m_colour.r = 0;
-	m_colour.g = 255;
-	m_colour.b = 0;
-	m_colour.a = 255;
+	//sqrt((m_swipeVelocity.x * m_swipeVelocity.x) + (m_swipeVelocity.y * m_swipeVelocity.y))
+
+	m_swipeVelocity.x *= distanceTravelled;
+	m_swipeVelocity.y *= distanceTravelled;
+
+	dispatchEvent(GestureListener::GestureEvent::SWIPE);
 }
 
 void GestureManager::pinchOpen(SDL_Event & evt)
 {
 	std::cout << "Pinch Open Event" << std::endl;
-
-	m_colour.r = 0;
-	m_colour.g = 255;
-	m_colour.b = 255;
-	m_colour.a = 255;
+	dispatchEvent(GestureListener::GestureEvent::PINCH);
 }
 
 void GestureManager::pinchClose(SDL_Event & evt)
 {
 	std::cout << "Pinch Close Event" << std::endl;
 
-	m_colour.r = 125;
-	m_colour.g = 0;
-	m_colour.b = 125;
-	m_colour.a = 255;
+	dispatchEvent(GestureListener::GestureEvent::PINCH);
 }
 
 void GestureManager::addTouchEvent(int xPosition, int yPosition, int id, float timesincePressed)
 {
-	m_touches.push_back(std::make_pair(new TouchEvent(static_cast<float>(xPosition), static_cast<float>(yPosition), id, timesincePressed), false));
+	m_touches.push_back(new TouchEvent(static_cast<float>(xPosition), static_cast<float>(yPosition), id, timesincePressed));
 
-	fillRect.x = xPosition - fillRect.w / 2;
-	fillRect.y = yPosition - fillRect.h / 2;
-	
-	m_touchesDebug.push_back(fillRect);
+	SDL_Rect sr;
+	sr.h = (int)5;
+	sr.w = (int)5;
+	sr.x = (int)xPosition;
+	sr.y = (int)yPosition;
+
+	m_touchesDebug.push_back(sr);
 }
 
 void GestureManager::removeTouchEvent()
 {
 	for (size_t i = 0; i < m_touches.size(); i++)
 	{
-		delete m_touches[i].first;	
+		delete m_touches[i];	
 	}
 
 	m_touches.clear();
 	m_touchesDebug.clear();
 }
 
+void GestureManager::createListener(GestureListener::GestureEvent evt, GestureListener *listener)
+{
+	if (m_listeners.find(evt) == m_listeners.end())
+	{
+		//if Event not found create new key for it in the map
+		m_listeners[evt] = new std::vector<GestureListener*>();
+	}
+
+	m_listeners[evt]->push_back(listener);// push back listener
+}
+
+void GestureManager::dispatchEvent(GestureListener::GestureEvent evt)
+{
+	std::string eventName = "dispatching: ";
+	if (m_listeners.find(evt) != m_listeners.end())
+	{
+		/*for (GestureListener * const &listener : *m_listeners[evt])
+		{*/
+			for (std::vector<GestureListener *>::iterator iter = m_listeners[evt]->begin(); iter != m_listeners[evt]->end(); iter++)
+			{
+				switch (evt)
+				{
+				case GestureListener::GestureEvent::TAP:
+					eventName += "TAP";
+					break;
+				case GestureListener::GestureEvent::HOLD:
+					eventName += "HOLD";
+					break;
+				case GestureListener::GestureEvent::SWIPE:
+					eventName += "SWIPE";
+					break;
+				case GestureListener::GestureEvent::PINCH:
+					eventName += "PINCH";
+					break;
+				}
+				
+
+				std::cout << eventName << std::endl;
+				(*iter)->onGesture(evt);
+			}
+			
+
+			//listener->onGesture(evt);
+		//}
+	}
+}
+
 void GestureManager::processInput(SDL_Event & evt)
 {
 	float dist = 0;
-	float value = 0;
-	//m_currentEvent = (GestureEvent)-1;
+	float timePressed = 0;
 
 	if (m_touches.size() > 0)
 	{
-		value = SDL_GetTicks() - m_touches[0].first->getTimePressed();
+		timePressed = SDL_GetTicks() - m_touches[0]->getTimePressed();
 	}
 
 	while (SDL_PollEvent(&evt))
@@ -134,34 +140,33 @@ void GestureManager::processInput(SDL_Event & evt)
 		case SDL_MOUSEBUTTONDOWN:
 			SDL_GetMouseState(&xMouse, &yMouse);
 			addTouchEvent(xMouse, yMouse, evt.tfinger.touchId, SDL_GetTicks());
-			collisionChecker();
 			break;
 		case SDL_MOUSEMOTION:
 			SDL_GetMouseState(&xMouse, &yMouse);
-			if (value > m_timeForTapGesture && evt.mgesture.numFingers == 1)
+			if (timePressed > m_timeForTapGesture && evt.mgesture.numFingers == 1)
 			{
-				hold();
-				m_currentEvent = GestureEvent::HOLD;
+				if (m_touches.size() > 0)
+				{
+					m_touches[0]->setXpos((float)xMouse);
+					m_touches[0]->setYpos((float)yMouse);
+				}
+				dispatchEvent(GestureListener::GestureEvent::HOLD);
 			}
 			break;
-		case SDL_MOUSEBUTTONUP:
+		case SDL_MOUSEBUTTONUP:	
+			SDL_GetMouseState(&xMouse, &yMouse);
 			if (m_touches.size() > 0)
-			{
-				SDL_GetMouseState(&xMouse, &yMouse);
-				dist = sqrt((xMouse - m_touches[0].first->getXpos()) * (xMouse - m_touches[0].first->getXpos()) + (yMouse - m_touches[0].first->getYpos()) * (yMouse - m_touches[0].first->getYpos()));
+			{							
+				dist = sqrt((xMouse - m_touches[0]->getXpos()) * (xMouse - m_touches[0]->getXpos()) + (yMouse - m_touches[0]->getYpos()) * (yMouse - m_touches[0]->getYpos()));
 
-				/*std::cout << "dist: " << dist << std::endl;
-				std::cout << "time: " << value << std::endl;*/
-
-				if (value < m_timeForTapGesture && dist < 50)
+				std::cout << "dist: " << dist << std::endl;
+				if (timePressed < m_timeForTapGesture && dist < 5)
 				{
-					tap();
-					m_currentEvent = GestureEvent::TAP;
+					dispatchEvent(GestureListener::GestureEvent::TAP);
 				}
-				else if (value < m_timeForTapGesture && dist >= 50)
+				else if (timePressed < m_timeForTapGesture && dist >= 20)
 				{
-					swipe();
-					m_currentEvent = GestureEvent::SWIPE;
+					calculateSwipeVelocity(xMouse, yMouse, m_touches[0]->getXpos(), m_touches[0]->getYpos(), dist, timePressed);
 				}
 
 				removeTouchEvent();
@@ -173,14 +178,11 @@ void GestureManager::processInput(SDL_Event & evt)
 				if (evt.mgesture.dDist >= 0)
 				{
 					pinchOpen(evt);
-					m_currentEvent = GestureEvent::PINCH;
 				}
 				else if (evt.mgesture.dDist < 0)
 				{
 					pinchClose(evt);
-					m_currentEvent = GestureEvent::PINCH;
 				}
-
 			}
 			break;
 		default:
@@ -195,51 +197,19 @@ void GestureManager::processInput(SDL_Event & evt)
 	}
 }
 
-std::pair<GestureEvent, bool> GestureManager::getEventData() const
+TouchEvent * GestureManager::getTouchEventData()
 {
 	if (m_touches.size() > 0)
 	{
-		for (int i = 0; i < m_touches.size(); i++)
-		{
-			if (m_touches[i].second)
-			{
-				return std::make_pair(m_currentEvent, m_touches[i].second);
-			}
-		}
+		return m_touches[0];
 	}
-	return std::make_pair((GestureEvent)-1, false);
+
+	return 0;
 }
 
-void GestureManager::collisionChecker()
+FloatPoint GestureManager::getSwipeData() const
 {
-	if (m_touches.size() > 0)
-	{
-		for (int i = 0; i < m_touches.size(); i++)
-		{
-			float aLeft = m_touches[i].first->getXpos();
-			float aTop = m_touches[i].first->getYpos();
-			float aRight = m_touches[i].first->getXpos() + 50;
-			float aBottom = m_touches[i].first->getYpos() + 50;
-
-			float bLeft = m_targetPosition->x;
-			float bTop = m_targetPosition->y;
-			float bRight = m_targetPosition->x + m_targetSize->x;
-			float bBottom = m_targetPosition->y + m_targetSize->y;
-
-			m_touches[i].second = aLeft <= bRight &&
-								  bLeft <= aRight &&
-								  aTop <= bBottom &&
-								  bTop <= aBottom;
-		}
-	}
-}
-
-void GestureManager::setTargetObject(int & otherXposition, int & otherYposition, int & width, int & height)
-{
-	m_targetPosition->x = otherXposition;
-	m_targetPosition->y = otherYposition;
-	m_targetSize->x = width;
-	m_targetSize->y = height;
+	return m_swipeVelocity;
 }
 
 void GestureManager::debugRender(SDL_Renderer * renderer)
@@ -251,7 +221,3 @@ void GestureManager::debugRender(SDL_Renderer * renderer)
 	}
 }
 
-SDL_Color GestureManager::getDebugColour() const
-{
-	return m_colour;
-}

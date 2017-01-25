@@ -1,6 +1,6 @@
 #pragma once
 #include "SDL.h"
-#include "GestureEvent.h"
+#include "GestureListener.h"
 #include <iostream>
 #include<map>
 #include <string>
@@ -9,8 +9,8 @@
 struct FloatPoint
 {
 public:
-	float x = 0;
-	float y = 0;
+	float x;
+	float y;
 
 	FloatPoint operator+(const FloatPoint& b) 
 	{
@@ -95,10 +95,7 @@ private:
 	std::vector<SDL_Rect> m_touchesDebug;
 	std::vector<TouchEvent*> m_touches;
 
-	std::map<GestureListener::GestureEvent, 
-		     std::vector<GestureListener*>*> m_listeners;
-
-	GestureListener::GestureEvent m_currentEvent;
+	std::map<GestureListener::GestureEvent, std::vector<GestureListener*>*> m_listeners;
 
 	SDL_Point m_screenSize;
 
@@ -127,7 +124,6 @@ public:
 
 	TouchEvent * getTouchEventData();
 
-	GestureListener::GestureEvent getEventData() const;
 	FloatPoint getSwipeData() const;
 
 	void debugRender(SDL_Renderer * renderer);

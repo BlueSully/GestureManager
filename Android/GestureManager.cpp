@@ -1,11 +1,11 @@
 #include "GestureManager.h"
 
-GestureManager::GestureManager() : m_currentEvent((GestureListener::GestureEvent)-1)
+GestureManager::GestureManager()
 {
 	m_timeForTapGesture = 250;
 }
 
-GestureManager::GestureManager(int screenWidth, int screenHeight) : m_currentEvent((GestureListener::GestureEvent)-1)
+GestureManager::GestureManager(int screenWidth, int screenHeight) 
 {
 	m_timeForTapGesture = 250;
 	m_screenSize.x = screenWidth;
@@ -42,16 +42,14 @@ void GestureManager::calculateSwipeVelocity(float endPostionX, float endPostionY
 void GestureManager::pinchOpen(SDL_Event & evt)
 {
 	std::cout << "Pinch Open Event" << std::endl;
-
-	m_currentEvent = GestureListener::GestureEvent::PINCH;
+	dispatchEvent(GestureListener::GestureEvent::PINCH);
 }
 
 void GestureManager::pinchClose(SDL_Event & evt)
 {
 	std::cout << "Pinch Close Event" << std::endl;
 
-
-	m_currentEvent = GestureListener::GestureEvent::PINCH;
+	dispatchEvent(GestureListener::GestureEvent::PINCH);
 }
 
 void GestureManager::addTouchEvent(int xPosition, int yPosition, int id, float timesincePressed)
@@ -74,8 +72,6 @@ void GestureManager::removeTouchEvent()
 		delete m_touches[i];	
 	}
 
-	m_currentEvent = (GestureListener::GestureEvent)-1;
-
 	m_touches.clear();
 	m_touchesDebug.clear();
 }
@@ -96,27 +92,34 @@ void GestureManager::dispatchEvent(GestureListener::GestureEvent evt)
 	std::string eventName = "dispatching: ";
 	if (m_listeners.find(evt) != m_listeners.end())
 	{
-		for (auto const &listener : *m_listeners[evt]) 
-		{
-			switch (evt) 
+		/*for (GestureListener * const &listener : *m_listeners[evt])
+		{*/
+			for (std::vector<GestureListener *>::iterator iter = m_listeners[evt]->begin(); iter != m_listeners[evt]->end(); iter++)
 			{
-			case GestureListener::GestureEvent::TAP:
-				eventName += "TAP";
-				break;
-			case GestureListener::GestureEvent::HOLD:
-				eventName += "HOLD";
-				break;
-			case GestureListener::GestureEvent::SWIPE:
-				eventName += "SWIPE";
-				break;
-			case GestureListener::GestureEvent::PINCH:
-				eventName += "PINCH";
-				break;
-			}
-			std::cout << eventName << std::endl;
+				switch (evt)
+				{
+				case GestureListener::GestureEvent::TAP:
+					eventName += "TAP";
+					break;
+				case GestureListener::GestureEvent::HOLD:
+					eventName += "HOLD";
+					break;
+				case GestureListener::GestureEvent::SWIPE:
+					eventName += "SWIPE";
+					break;
+				case GestureListener::GestureEvent::PINCH:
+					eventName += "PINCH";
+					break;
+				}
+				
 
-			listener->onGesture(evt);
-		}
+				std::cout << eventName << std::endl;
+				(*iter)->onGesture(evt);
+			}
+			
+
+			//listener->onGesture(evt);
+		//}
 	}
 }
 
@@ -200,11 +203,8 @@ TouchEvent * GestureManager::getTouchEventData()
 	{
 		return m_touches[0];
 	}
-}
 
-GestureListener::GestureEvent GestureManager::getEventData() const
-{
-	return m_currentEvent;
+	return 0;
 }
 
 FloatPoint GestureManager::getSwipeData() const

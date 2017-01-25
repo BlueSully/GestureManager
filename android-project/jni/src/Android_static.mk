@@ -6,6 +6,7 @@ LOCAL_MODULE := main
 
 LOCAL_SRC_FILES := main.cpp
 LOCAL_SRC_FILES += GestureManager.cpp
+LOCAL_SRC_FILES += BoxObject.cpp
 
 LOCAL_STATIC_LIBRARIES := SDL2_static
 

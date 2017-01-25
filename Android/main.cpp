@@ -9,25 +9,13 @@
 
 using namespace std;
 
-struct Clock
-{
-	uint32_t last_tick_time = 0;
-	uint32_t delta = 0;
-
-	void tick()
-	{
-		uint32_t tick_time = SDL_GetTicks();
-		delta = tick_time - last_tick_time;
-		last_tick_time = tick_time;
-	}
-};
-
 int main(int argc, char* argv[]) 
 {
 	srand(time(NULL));
 	bool running = true;
 
-	Clock m_clock;
+	uint32_t last_tick_time = 0;
+	uint32_t delta = 0;
 
 	SDL_Window *window;
 	SDL_Point windowSize;
@@ -66,16 +54,17 @@ int main(int argc, char* argv[])
 
 	while (running)
 	{
-		m_clock.tick();
+		uint32_t tick_time = SDL_GetTicks();
+		delta = tick_time - last_tick_time;
+		last_tick_time = tick_time;
 
 		SDL_Event event;
 
 		m_gestureManager->processInput(event);
-		TouchEvent * touchEvent = m_gestureManager->getTouchEventData();
 
-		if (touchEvent != nullptr)
+		if (m_gestureManager->getTouchEventData() != NULL)
 		{
-			m_box.setPressed(m_box.collisionChecker(touchEvent->getXpos(), touchEvent->getYpos(), 0, 0));
+			m_box.setPressed(m_box.collisionChecker(m_gestureManager->getTouchEventData()->getXpos(), m_gestureManager->getTouchEventData()->getYpos(), 0, 0));
 		}
 
 
@@ -95,7 +84,7 @@ int main(int argc, char* argv[])
 		//		break;
 		//}
 
-		m_box.update(m_clock.delta);
+		m_box.update(delta);
 
 		//Clear screen
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

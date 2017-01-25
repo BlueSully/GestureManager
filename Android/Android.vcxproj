@@ -25,7 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoxObject.h" />
-    <ClInclude Include="GestureEvent.h" />
+    <ClInclude Include="GestureListener.h" />
     <ClInclude Include="GestureManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

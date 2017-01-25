@@ -29,10 +29,10 @@
     <ClInclude Include="GestureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GestureEvent.h">
+    <ClInclude Include="BoxObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoxObject.h">
+    <ClInclude Include="GestureListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
