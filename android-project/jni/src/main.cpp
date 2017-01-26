@@ -47,10 +47,12 @@ int main(int argc, char* argv[])
 
 	BoxObject m_box;
 
-	GestureManager * m_gestureManager;
-	m_gestureManager = new GestureManager(windowSize.x, windowSize.y);
+	GestureManager * m_gestureManager = m_gestureManager->getInstance();
+	m_gestureManager->setScreenSize(windowSize.x, windowSize.y);
+
 	m_gestureManager->createListener(GestureListener::GestureEvent::TAP, &m_box);
 	m_gestureManager->createListener(GestureListener::GestureEvent::SWIPE, &m_box);
+	m_gestureManager->createListener(GestureListener::GestureEvent::HOLD, &m_box);
 
 	while (running)
 	{
@@ -61,28 +63,6 @@ int main(int argc, char* argv[])
 		SDL_Event event;
 
 		m_gestureManager->processInput(event);
-
-		if (m_gestureManager->getTouchEventData() != NULL)
-		{
-			m_box.setPressed(m_box.collisionChecker(m_gestureManager->getTouchEventData()->getXpos(), m_gestureManager->getTouchEventData()->getYpos(), 0, 0));
-		}
-
-
-		//switch (m_gestureManager->getEventData())
-		//{	
-		//	case GestureListener::GestureEvent::TAP:
-		//		/**/
-		//		break;
-		//	case GestureListener::GestureEvent::SWIPE:
-		//		m_box.setColour(m_gestureManager->getDebugColour().r, m_gestureManager->getDebugColour().g, m_gestureManager->getDebugColour().b, m_gestureManager->getDebugColour().a);
-		//		break;
-		//	case GestureListener::GestureEvent::HOLD:
-		//		m_box.setColour(m_gestureManager->getDebugColour().r, m_gestureManager->getDebugColour().g, m_gestureManager->getDebugColour().b, m_gestureManager->getDebugColour().a);
-		//		break;
-		//	case GestureListener::GestureEvent::PINCH:
-		//		m_box.setColour(m_gestureManager->getDebugColour().r, m_gestureManager->getDebugColour().g, m_gestureManager->getDebugColour().b, m_gestureManager->getDebugColour().a);
-		//		break;
-		//}
 
 		m_box.update(delta);
 

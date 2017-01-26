@@ -92,6 +92,28 @@ bool BoxObject::collisionChecker(float x, float y, float width, float height)
 	return true;
 }
 
+void BoxObject::boundaryCollision(int worldPosX, int worldPosY, int worldWidth, int worldHeight)
+{
+	if (getXpos() < 0) 
+	{
+		m_positionX = 0;
+	}
+	else if (getXpos() + m_sizeW > worldPosX + worldWidth)
+	{
+		m_positionX = worldPosX + worldWidth - m_sizeW;
+	}
+
+	if (getYpos() < 0)
+	{
+		m_positionY = 0;
+	}
+	else if (getYpos() + m_sizeH > worldPosY + worldHeight)
+	{
+		m_positionY = worldPosY + worldHeight - m_sizeH;
+	}
+
+}
+
 void BoxObject::update(float deltaTime)
 {
 	if (m_velocityX > MAX_SPEED)
@@ -114,6 +136,7 @@ void BoxObject::update(float deltaTime)
 
 	m_positionX += (m_velocityX * deltaTime);
 	m_positionY += (m_velocityY * deltaTime);
+
 }
 
 void BoxObject::onGesture(GestureListener::GestureEvent evt)
@@ -139,8 +162,12 @@ void BoxObject::onGesture(GestureListener::GestureEvent evt)
 	case GestureListener::GestureEvent::HOLD:
 		if (GestureManager::getInstance()->getTouchEventData() != NULL) 
 		{
-			m_positionX = GestureManager::getInstance()->getSwipeData().x;
-			m_positionY = GestureManager::getInstance()->getSwipeData().y;
+			//if (collisionChecker(GestureManager::getInstance()->getTouchEventData()->getXpos(), GestureManager::getInstance()->getTouchEventData()->getYpos(), 0, 0))
+			//{
+				m_positionX = GestureManager::getInstance()->getTouchEventData()->getXpos() - m_sizeW / 2;
+				m_positionY = GestureManager::getInstance()->getTouchEventData()->getYpos() - m_sizeH / 2;
+				m_velocityX = m_velocityY = 0;
+			//}
 		}
 		break;
 	};

@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 		SDL_RenderClear(renderer);
 
 		m_box.draw(renderer);
-
+		m_box.boundaryCollision(0, 0, windowSize.x, windowSize.y);
 		m_gestureManager->debugRender(renderer);
 
 		//Update screen

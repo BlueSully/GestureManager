@@ -1,11 +1,11 @@
 #include "BoxObject.h"
 
-BoxObject::BoxObject() : MAX_SPEED(100)
+BoxObject::BoxObject() : MAX_SPEED(1)
 {
 	m_positionX = 640 / 4;
 	m_positionY = 480 / 4;
-	m_sizeW = 100;
-	m_sizeH = 100;
+	m_sizeW = 75;
+	m_sizeH = 75;
 
 	m_velocityX = 0;
 	m_velocityY = 0;
@@ -16,6 +16,7 @@ BoxObject::BoxObject() : MAX_SPEED(100)
 
 BoxObject::~BoxObject()
 {
+
 }
 
 float BoxObject::getXpos() const
@@ -36,11 +37,6 @@ float BoxObject::getSizeW() const
 float BoxObject::getSizeH() const
 {
 	return m_sizeH;
-}
-
-void BoxObject::setPressed(bool value)
-{
-	m_pressed = value;
 }
 
 float BoxObject::getXvelocity() const
@@ -118,6 +114,12 @@ void BoxObject::update(float deltaTime)
 
 	m_positionX += (m_velocityX * deltaTime);
 	m_positionY += (m_velocityY * deltaTime);
+
+	//std::cout << "x: " << m_positionX << " y: " << m_positionY << std::endl;
+	if (GestureManager::getInstance()->getTouchEventData() != NULL)
+	{
+		//std::cout << "x: " << GestureManager::getInstance()->getTouchEventData()->getXpos() << " y: " << GestureManager::getInstance()->getTouchEventData()->getYpos() << std::endl;
+	}
 }
 
 void BoxObject::onGesture(GestureListener::GestureEvent evt)
@@ -125,10 +127,26 @@ void BoxObject::onGesture(GestureListener::GestureEvent evt)
 	switch (evt)
 	{
 	case GestureListener::GestureEvent::TAP:
-		if (m_pressed) 
+		if (GestureManager::getInstance()->getTouchEventData() != NULL) 
 		{
-			setColour(rand() % 257, rand() % 257, rand() % 257, 256);
-			m_pressed = false;
+			if (collisionChecker(GestureManager::getInstance()->getTouchEventData()->getXpos(), GestureManager::getInstance()->getTouchEventData()->getYpos(), 0, 0))
+			{
+				setColour(rand() % 257, rand() % 257, rand() % 257, 256);
+			}
+		}
+		break;
+	case GestureListener::GestureEvent::SWIPE:
+		if (GestureManager::getInstance()->getTouchEventData() != NULL) 
+		{
+			m_velocityX = GestureManager::getInstance()->getSwipeData().x;
+			m_velocityY = GestureManager::getInstance()->getSwipeData().y;
+		}
+		break;
+	case GestureListener::GestureEvent::HOLD:
+		if (GestureManager::getInstance()->getTouchEventData() != NULL) 
+		{
+			m_positionX = GestureManager::getInstance()->getTouchEventData()->getXpos();
+			m_positionY = GestureManager::getInstance()->getTouchEventData()->getYpos();
 		}
 		break;
 	};
@@ -141,7 +159,6 @@ void BoxObject::draw(SDL_Renderer * renderer)
 	sr.w = (int)m_sizeW;
 	sr.x = (int)m_positionX;
 	sr.y = (int)m_positionY;
-
 
 	SDL_SetRenderDrawColor(renderer, m_colour.r, m_colour.g, m_colour.b, m_colour.a);
 	SDL_RenderFillRect(renderer, &sr);

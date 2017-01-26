@@ -130,34 +130,29 @@ void GestureManager::processInput(SDL_Event & evt)
 	{
 		timePressed = SDL_GetTicks() - m_touches[0]->getTimePressed();
 	}
-
+	//std::cout << "time: " << timePressed << std::endl;
 	while (SDL_PollEvent(&evt))
 	{
+		SDL_GetMouseState(&xMouse, &yMouse);
 		switch (evt.type)
 		{
-		case SDL_MOUSEBUTTONDOWN:
-			SDL_GetMouseState(&xMouse, &yMouse);
+		case SDL_MOUSEBUTTONDOWN:			
 			addTouchEvent(xMouse, yMouse, evt.tfinger.touchId, SDL_GetTicks());
 			break;
 		case SDL_MOUSEMOTION:
-			SDL_GetMouseState(&xMouse, &yMouse);
-			if (timePressed > m_timeForTapGesture && evt.mgesture.numFingers == 1)
+			if (timePressed > m_timeForTapGesture && m_touches.size() == 1 )
 			{
-				if (m_touches.size() > 0)
-				{
-					m_touches[0]->setXpos((float)xMouse);
-					m_touches[0]->setYpos((float)yMouse);
-				}
+				m_touches[0]->setXpos((float)xMouse);
+				m_touches[0]->setYpos((float)yMouse);
 				dispatchEvent(GestureListener::GestureEvent::HOLD);
 			}
 			break;
 		case SDL_MOUSEBUTTONUP:	
-			SDL_GetMouseState(&xMouse, &yMouse);
 			if (m_touches.size() > 0)
 			{							
 				dist = sqrt((xMouse - m_touches[0]->getXpos()) * (xMouse - m_touches[0]->getXpos()) + (yMouse - m_touches[0]->getYpos()) * (yMouse - m_touches[0]->getYpos()));
 
-				std::cout << "dist: " << dist << std::endl;
+				//std::cout << "dist: " << dist << std::endl;
 				if (timePressed < m_timeForTapGesture && dist < 5)
 				{
 					dispatchEvent(GestureListener::GestureEvent::TAP);

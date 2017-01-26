@@ -33,6 +33,7 @@ public:
 	void setColour(int red, int green, int blue, int alpha);
 
 	bool collisionChecker(float x, float y, float width, float height);
+	void boundaryCollision(int worldPosX, int worldPosY, int worldWidth, int worldHeight);
 
 	void update(float deltaTime);
 	void onGesture(GestureListener::GestureEvent evt);
