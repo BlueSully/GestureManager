@@ -14,16 +14,24 @@ int main(int argc, char* argv[])
 	srand(time(NULL));
 	bool running = true;
 
+	uint32_t tick_time = 0;
 	uint32_t last_tick_time = 0;
 	uint32_t delta = 0;
 
 	SDL_Window *window;
 	SDL_Point windowSize;
 
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
-	windowSize.x = 640;
-	windowSize.y = 480;
+	SDL_DisplayMode DM;
+	SDL_GetCurrentDisplayMode(0, &DM);
+	windowSize.x = DM.w;
+	windowSize.y = DM.h;
+
+	//for desktop debuging purposes
+	windowSize.x = 480;
+	windowSize.y = 640;
+
 
 	window = SDL_CreateWindow(
 		"An SDL2 window",                  // window title
@@ -31,7 +39,7 @@ int main(int argc, char* argv[])
 		SDL_WINDOWPOS_UNDEFINED,           // initial y position
 		windowSize.x,                      // width, in pixels
 		windowSize.y,                      // height, in pixels
-		SDL_WINDOW_SHOWN                   // flags - see below
+		SDL_WINDOW_SHOWN                   // flags 
 	);
 
 	// Check that the window was successfully created
@@ -53,11 +61,12 @@ int main(int argc, char* argv[])
 	m_gestureManager->createListener(GestureListener::GestureEvent::TAP, &m_box);
 	m_gestureManager->createListener(GestureListener::GestureEvent::SWIPE, &m_box);
 	m_gestureManager->createListener(GestureListener::GestureEvent::HOLD, &m_box);
+	m_gestureManager->createListener(GestureListener::GestureEvent::PINCH, &m_box);
 
 	while (running)
 	{
-		uint32_t tick_time = SDL_GetTicks();
-		delta = tick_time - last_tick_time;
+		tick_time = SDL_GetTicks();
+		delta = (tick_time - last_tick_time);
 		last_tick_time = tick_time;
 
 		SDL_Event event;
@@ -71,7 +80,7 @@ int main(int argc, char* argv[])
 		SDL_RenderClear(renderer);
 
 		m_box.draw(renderer);
-
+		m_box.boundaryCollision(0, 0, windowSize.x, windowSize.y);
 		m_gestureManager->debugRender(renderer);
 
 		//Update screen

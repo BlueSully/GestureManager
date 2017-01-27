@@ -41,7 +41,7 @@ public:
 	}
 };
 
-struct TouchEvent
+struct TouchEventData
 {
 private:
 	float m_Xpos;
@@ -51,9 +51,9 @@ private:
 	bool pressed;
 	
 public:
-	TouchEvent() {}
+	TouchEventData() {}
 
-	TouchEvent(float x, float y, int id, float timePressed) : m_Xpos(x), m_Ypos(y), m_touchId(id), m_timePressed(timePressed)
+	TouchEventData(float x, float y, float timePressed) : m_Xpos(x), m_Ypos(y), m_timePressed(timePressed)
 	{
 		
 	}
@@ -96,7 +96,7 @@ private:
 	GestureManager();
 
 	std::vector<SDL_Rect> m_touchesDebug;
-	std::vector<TouchEvent*> m_touches;
+	TouchEventData * m_touch;
 
 	std::map<GestureListener::GestureEvent, std::vector<GestureListener*>*> m_listeners;
 
@@ -105,7 +105,8 @@ private:
 	FloatPoint m_swipeVelocity;
 
 	float m_timeForTapGesture;
-
+	float m_pinchScale;
+	int m_numberOfTouches;
 	int xMouse, yMouse;
 
 	void calculateSwipeVelocity(float endPostionX, float endPostionY, float startPositionX, float startPositionY, float distanceTravelled, float timeTaken);
@@ -117,17 +118,19 @@ public:
 	
 	~GestureManager();
 
-	void addTouchEvent(int xPosition, int yPosition, int id, float timesincePressed);
+	void setScreenSize(int screenWidth, int screenHeight);
+
+	void addTouchEvent(int xPosition, int yPosition, float timesincePressed);
 	void removeTouchEvent();
 
 	void createListener(GestureListener::GestureEvent evt, GestureListener *listener);
 	void dispatchEvent(GestureListener::GestureEvent evt);
 
-	void setScreenSize(int screenWidth, int screenHeight);
 	void processInput(SDL_Event & evt);
 
-	TouchEvent * getTouchEventData();
-
+	TouchEventData * getTouchEventData();
+	int getNumberOfTouches() const;
+	float getPinchScalar() const;
 	FloatPoint getSwipeData() const;
 
 	void debugRender(SDL_Renderer * renderer);

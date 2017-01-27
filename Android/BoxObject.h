@@ -11,13 +11,12 @@ private :
 	float m_positionY;
 	float m_sizeW;
 	float m_sizeH;
-	const int MAX_SPEED;
+	const float MAX_SPEED;
+	const float MIN_SPEED;
 	float m_velocityX;
 	float m_velocityY;
-
-	SDL_Color m_colour;
-
 	bool m_pressed;
+	SDL_Color m_colour;
 public:
 	BoxObject();
 	~BoxObject();
