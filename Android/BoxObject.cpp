@@ -161,19 +161,11 @@ void BoxObject::onGesture(GestureListener::GestureEvent evt)
 	//check if touch is colliding
 	if (GestureManager::getInstance()->getTouchEventData(0) != NULL)
 	{
-		if (collisionChecker(GestureManager::getInstance()->getTouchEventData(0)->getXpos(), GestureManager::getInstance()->getTouchEventData(0)->getYpos(), 0, 0))
-		{
-			m_pressed = true;
-		}
-		else
-		{
-			m_pressed = false;
-		}
-
 		switch (evt)
 		{
 		case GestureListener::GestureEvent::TAP:
-			if (m_pressed && GestureManager::getInstance()->getNumberOfTouches() == 1)
+			if (collisionChecker(GestureManager::getInstance()->getTouchEventData(0)->getXpos(), GestureManager::getInstance()->getTouchEventData(0)->getYpos(), 10, 10) && 
+				GestureManager::getInstance()->getNumberOfTouches() == 1)
 			{
 				setColour(rand() % 257, rand() % 257, rand() % 257, 256);
 			}
@@ -189,8 +181,8 @@ void BoxObject::onGesture(GestureListener::GestureEvent evt)
 		case GestureListener::GestureEvent::PINCH:
 			if (GestureManager::getInstance()->getNumberOfTouches() == 2)
 			{		
-				m_sizeW = GestureManager::getInstance()->getPinchScalar();
-				m_sizeH = GestureManager::getInstance()->getPinchScalar();
+				m_sizeW += GestureManager::getInstance()->getPinchScalar();
+				m_sizeH += GestureManager::getInstance()->getPinchScalar();
 
 				if (m_sizeW > MAX_SIZE) 
 				{

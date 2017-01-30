@@ -105,11 +105,12 @@ private:
 
 	float m_timeForTapGesture;
 	float m_pinchScale;
+	float m_lastPinchScale;
 
 	int xMouse, yMouse;
 
 	void calculateSwipeVelocity(float endPostionX, float endPostionY, float startPositionX, float startPositionY, float distanceTravelled, float timeTaken);
-	void calculatePinchData();
+	void calculatePinchData(SDL_Event & evt);
 
 public:
 	static GestureManager * getInstance();

@@ -15,13 +15,17 @@ GestureManager * GestureManager::getInstance()
 GestureManager::GestureManager()
 {
 	m_timeForTapGesture = 250;
+	m_lastPinchScale = 0;
 	m_pinchScale = 0;
 }
 
 GestureManager::~GestureManager()
 {
-	//delete m_touch;	
-	//m_touch = nullptr;
+	for (size_t i = 0; i < m_touches.size(); i++)
+	{
+		delete m_touches[i];
+	}
+
 	delete m_instance;
 }
 
@@ -41,7 +45,7 @@ void GestureManager::calculateSwipeVelocity(float endPostionX, float endPostionY
 	m_swipeVelocity.x = -m_swipeVelocity.x / magData;
 	m_swipeVelocity.y = -m_swipeVelocity.y / magData;
 
-	float speed = distanceTravelled / timeTaken;
+	float speed = (distanceTravelled / timeTaken);
 
 	m_swipeVelocity.x *= speed;
 	m_swipeVelocity.y *= speed;
@@ -49,7 +53,7 @@ void GestureManager::calculateSwipeVelocity(float endPostionX, float endPostionY
 	dispatchEvent(GestureListener::GestureEvent::SWIPE);
 }
 
-void GestureManager::calculatePinchData()
+void GestureManager::calculatePinchData(SDL_Event & evt)
 {
 	float dX, dY;
 
@@ -59,9 +63,17 @@ void GestureManager::calculatePinchData()
 		dY = m_touches[0]->getYpos() - m_touches[1]->getYpos();
 	}
 
-	m_pinchScale = sqrt(dX * dX + dY * dY);
+	m_pinchScale = sqrt(dX * dX + dY * dY) * evt.mgesture.dDist;
 
-	std::cout << "Scale: " << m_pinchScale << std::endl;
+	if (m_pinchScale != m_lastPinchScale) 
+	{
+		m_lastPinchScale = m_pinchScale;
+	}
+	else 
+	{
+		m_pinchScale = 0;
+	}
+
 	dispatchEvent(GestureListener::GestureEvent::PINCH);
 }
 
@@ -120,14 +132,16 @@ void GestureManager::processInput(SDL_Event & evt)
 	float dist = 0;
 	float timePressed = 0;
 
-	//std::cout << "size: " << m_touches.size() << std::endl;
 	while (SDL_PollEvent(&evt))
 	{
-		SDL_GetMouseState(&xMouse, &yMouse);
 		switch (evt.type)
 		{
 		case SDL_MULTIGESTURE:
-			
+			if (fabs(evt.mgesture.dDist) > 0.002) 
+			{
+				calculatePinchData(evt);
+				dispatchEvent(GestureListener::GestureEvent::PINCH);
+			}
 			break;
 		case SDL_FINGERDOWN:
 			addTouchEvent(evt.tfinger.x * m_screenSize.x, evt.tfinger.y * m_screenSize.y, (int)evt.tfinger.fingerId, static_cast<float>(SDL_GetTicks()));		
@@ -139,19 +153,15 @@ void GestureManager::processInput(SDL_Event & evt)
 
 				if (timePressed > m_timeForTapGesture)
 				{
-					m_touches[i]->setXpos(static_cast<float>(evt.tfinger.x * m_screenSize.x));
-					m_touches[i]->setYpos(static_cast<float>(evt.tfinger.y * m_screenSize.y));
+					if (evt.tfinger.fingerId == m_touches[i]->getId())
+					{
+						m_touches[i]->setXpos(static_cast<float>(evt.tfinger.x * m_screenSize.x));
+						m_touches[i]->setYpos(static_cast<float>(evt.tfinger.y * m_screenSize.y));
+					}
 
 					if (m_touches.size() == 1)
 					{
 						dispatchEvent(GestureListener::GestureEvent::HOLD);
-					}
-					else if (m_touches.size() >= 2)//Looking for mulitple finger gestures
-					{
-						if (m_touches.size() == 2)//look for two finger gestures
-						{
-							calculatePinchData();
-						}
 					}
 				}
 			}
@@ -163,9 +173,9 @@ void GestureManager::processInput(SDL_Event & evt)
 
 				if (m_touches.size() == 1)
 				{
-					dist = sqrt((evt.tfinger.x * m_screenSize.x - m_touches[0]->getXpos()) * (evt.tfinger.x * m_screenSize.x - m_touches[0]->getXpos()) + (evt.tfinger.y * m_screenSize.y - m_touches[0]->getYpos()) * (evt.tfinger.y * m_screenSize.y - m_touches[0]->getYpos()));
+					dist = sqrt((evt.tfinger.x * m_screenSize.x - m_touches[0]->getXpos()) * (evt.tfinger.x * m_screenSize.x - m_touches[0]->getXpos()) + (evt.tfinger.y * m_screenSize.y - m_touches[0]->getYpos()) * (evt.tfinger.y * m_screenSize.x - m_touches[0]->getYpos()));
 
-					if (timePressed < m_timeForTapGesture && dist < 5)
+					if (timePressed < m_timeForTapGesture && dist < 20)
 					{
 						dispatchEvent(GestureListener::GestureEvent::TAP);
 					}
@@ -177,66 +187,8 @@ void GestureManager::processInput(SDL_Event & evt)
 				removeTouchEvent(i);
 			}
 			break;
-		//case SDL_MOUSEBUTTONDOWN:
-		//	addTouchEvent(xMouse, yMouse, (int)evt.tfinger.fingerId, static_cast<float>(SDL_GetTicks()));		
-		//	break;
-		//case SDL_MOUSEMOTION:
-		//	for (int i = 0; i < static_cast<float>(m_touches.size()); i++)
-		//	{
-		//		timePressed = (SDL_GetTicks() - m_touches[i]->getTimePressed());
-
-		//		if (timePressed > m_timeForTapGesture)
-		//		{
-		//			m_touches[i]->setXpos(static_cast<float>(xMouse));
-		//			m_touches[i]->setYpos(static_cast<float>(yMouse));
-
-		//			if (m_touches.size() == 1)
-		//			{
-		//				dispatchEvent(GestureListener::GestureEvent::HOLD);
-		//			}
-		//			else if (m_touches.size() >= 2)//Looking for mulitple finger gestures
-		//			{
-		//				if (m_touches.size() == 2)//look for two finger gestures
-		//				{
-		//					calculatePinchData();
-		//				}
-		//			}
-		//		}
-		//	}
-		//	break;
-		//case SDL_MOUSEBUTTONUP:
-		//	for (int i = 0; i < static_cast<int>(m_touches.size()); i++)
-		//	{
-		//		timePressed = SDL_GetTicks() - m_touches[i]->getTimePressed();
-
-		//		if (m_touches.size() == 1)
-		//		{		
-		//			dist = sqrt((xMouse - m_touches[0]->getXpos()) * (xMouse - m_touches[0]->getXpos()) + (yMouse - m_touches[0]->getYpos()) * (yMouse - m_touches[0]->getYpos()));
-
-		//			if (timePressed < m_timeForTapGesture && dist < 5)
-		//			{
-		//				dispatchEvent(GestureListener::GestureEvent::TAP);
-		//			}
-		//			else if (timePressed < m_timeForTapGesture && dist >= 20)
-		//			{
-		//				calculateSwipeVelocity(static_cast<float>(xMouse), static_cast<float>(yMouse), m_touches[0]->getXpos(), m_touches[0]->getYpos(), dist, timePressed);
-		//			}
-		//		}
-		//		removeTouchEvent(i);
-		//	}
-		//	break;
 		default:
 			break;
-		}
-
-		/*for (size_t i = 0; i < m_touches.size(); i++)
-		{
-			std::cout << "ID: " << m_touches[i]->getId() << " dist : " << dist << std::endl;
-		}*/
-		if (m_touches.size() > 1) 
-		{
-			m_touches[0]->setXpos(static_cast<float>(xMouse));
-			m_touches[0]->setYpos(static_cast<float>(yMouse));
 		}
 	}
 }
@@ -273,8 +225,8 @@ void GestureManager::debugRender(SDL_Renderer * renderer)
 		SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
 
 		SDL_Rect sr;
-		sr.h = (int)5;
-		sr.w = (int)5;
+		sr.h = (int)50;
+		sr.w = (int)50;
 		sr.x = (int)m_touches[i]->getXpos();
 		sr.y = (int)m_touches[i]->getYpos();
 
