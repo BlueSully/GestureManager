@@ -13,6 +13,8 @@ private :
 	float m_sizeH;
 	const float MAX_SPEED;
 	const float MIN_SPEED;
+	const float MAX_SIZE;
+	const float MIN_SIZE;
 	float m_velocityX;
 	float m_velocityY;
 	bool m_pressed;

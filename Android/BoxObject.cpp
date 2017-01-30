@@ -1,6 +1,6 @@
 #include "BoxObject.h"
 
-BoxObject::BoxObject() : MAX_SPEED(1), MIN_SPEED(0.1f)
+BoxObject::BoxObject() : MAX_SPEED(1), MIN_SPEED(0.1f), MAX_SIZE(300), MIN_SIZE(15)
 {
 	m_positionX = 640 / 4;
 	m_positionY = 480 / 4;
@@ -159,9 +159,9 @@ void BoxObject::update(float deltaTime)
 void BoxObject::onGesture(GestureListener::GestureEvent evt)
 {
 	//check if touch is colliding
-	if (GestureManager::getInstance()->getTouchEventData() != NULL)
+	if (GestureManager::getInstance()->getTouchEventData(0) != NULL)
 	{
-		if (collisionChecker(GestureManager::getInstance()->getTouchEventData()->getXpos(), GestureManager::getInstance()->getTouchEventData()->getYpos(), 0, 0))
+		if (collisionChecker(GestureManager::getInstance()->getTouchEventData(0)->getXpos(), GestureManager::getInstance()->getTouchEventData(0)->getYpos(), 0, 0))
 		{
 			m_pressed = true;
 		}
@@ -188,17 +188,36 @@ void BoxObject::onGesture(GestureListener::GestureEvent evt)
 			break;
 		case GestureListener::GestureEvent::PINCH:
 			if (GestureManager::getInstance()->getNumberOfTouches() == 2)
-			{
-				m_sizeW += GestureManager::getInstance()->getPinchScalar();
-				m_sizeH += GestureManager::getInstance()->getPinchScalar();
+			{		
+				m_sizeW = GestureManager::getInstance()->getPinchScalar();
+				m_sizeH = GestureManager::getInstance()->getPinchScalar();
+
+				if (m_sizeW > MAX_SIZE) 
+				{
+					m_sizeW = MAX_SIZE;
+				}
+				else if (m_sizeW < MIN_SIZE)
+				{
+					m_sizeW = MIN_SIZE;
+				}
+
+				if (m_sizeH > MAX_SIZE)
+				{
+					m_sizeH = MAX_SIZE;
+				}
+				else if (m_sizeH < MIN_SIZE)
+				{
+					m_sizeH = MIN_SIZE;
+				}
+
 				setColour(0, 0, 255, 256);
 			}
 			break;
 		case GestureListener::GestureEvent::HOLD:
 			if (GestureManager::getInstance()->getNumberOfTouches() == 1) 
 			{
-				m_positionX = GestureManager::getInstance()->getTouchEventData()->getXpos() - m_sizeW / 2;
-				m_positionY = GestureManager::getInstance()->getTouchEventData()->getYpos() - m_sizeH / 2;
+				m_positionX = GestureManager::getInstance()->getTouchEventData(0)->getXpos() - m_sizeW / 2;
+				m_positionY = GestureManager::getInstance()->getTouchEventData(0)->getYpos() - m_sizeH / 2;
 				m_velocityX = m_velocityY = 0;
 				setColour(0, 255, 0, 256);
 			}

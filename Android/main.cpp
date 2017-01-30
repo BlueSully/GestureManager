@@ -29,9 +29,9 @@ int main(int argc, char* argv[])
 	windowSize.y = DM.h;
 
 	//for desktop debuging purposes
-	windowSize.x = 480;
+	/*windowSize.x = 480;
 	windowSize.y = 640;
-
+*/
 
 	window = SDL_CreateWindow(
 		"An SDL2 window",                  // window title
